@@ -29,5 +29,5 @@ Para compilar e rodar o projeto, você precisa ter o **Java Development Kit (JDK
 
 Atualmente os inimigos apenas percorrem o caminho e causam dano, o jogo termina ao zerar vida. (Entrega 1)
 
-OBS1: Estou fazendo o projeto de forma individual, então irei commitar apenas nos checkpoints.
+OBS1: Estou fazendo o projeto de forma individual, então irei commitar apenas nos checkpoints.\\
 OBS2: A justificativa de design e o diagrama está em `docs/E1/`
