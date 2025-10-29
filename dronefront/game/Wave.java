@@ -8,7 +8,7 @@ public class Wave {
     public static class SpawnEvent {
         public final String tipoInimigo;
         public final int quantidade;
-        public final double intervalo; //em seg
+        public final double intervalo;
 
         public SpawnEvent(String tipoInimigo, int quantidade, double intervalo) {
             this.tipoInimigo = tipoInimigo;

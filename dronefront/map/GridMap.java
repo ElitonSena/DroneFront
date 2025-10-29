@@ -1,6 +1,9 @@
 package dronefront.map;
-import java.util.ArrayList;
+
 import dronefront.enemy.Enemy;
+import dronefront.projectile.Projectile;
+import dronefront.tower.Tower;
+import java.util.ArrayList;
 import java.util.List;
 
 public class GridMap {
@@ -11,109 +14,112 @@ public class GridMap {
     private final int altura;
     private Position posicaoDaBase;
 
+    private static final int LARGURA_MAPA = 20;
+    private static final int ALTURA_MAPA = 10;
+
     public GridMap() {
-        this.altura = LAYOUT_DEMO.length;
-        this.largura = LAYOUT_DEMO[0].length;
+        this.altura = ALTURA_MAPA;
+        this.largura = LARGURA_MAPA;
         this.grid = new TileMap[altura][largura];
         this.caminho = new Caminho();
 
+        List<Position> posicoesDoCaminho = gerarPosicoesDoCaminho();
+        
         for (int y = 0; y < altura; y++) {
             for (int x = 0; x < largura; x++) {
-                boolean ehCaminho = (LAYOUT_DEMO[y][x] == 1);
+                final int currentX = x;
+                final int currentY = y;
+                boolean ehCaminho = posicoesDoCaminho.stream()
+                                     .anyMatch(p -> p.getX() == currentX && p.getY() == currentY);
                 grid[y][x] = new TileMap(x, y, !ehCaminho);
             }
         }
-
-        gerarCaminhoFixo();
-    }
-
-    //a matriz abaixo represena apenas o visual do mapa
-    //to-do: representar o caminho real por meio de matriz, fica mais facil de editar
-    private static final int[][] LAYOUT_DEMO = {
-        {0, 1, 0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 1, 1, 1, 0, 0, 1, 1, 1, 0},
-        {0, 0, 0, 1, 0, 0, 1, 0, 1, 0},
-        {0, 0, 0, 1, 1, 1, 1, 0, 1, 0},
-        {0, 0, 0, 0, 0, 0, 0, 0, 1, 0},
-        {0, 0, 0, 0, 0, 0, 0, 0, 1, 0}
-    };
-
-    //aqui representa o caminho real
-    private void gerarCaminhoFixo() {
-        List<Position> ordemDoCaminho = new ArrayList<>();
-        ordemDoCaminho.add(new Position(1, 0));
-        ordemDoCaminho.add(new Position(1, 1));
-        ordemDoCaminho.add(new Position(2, 1));
-        ordemDoCaminho.add(new Position(3, 1));
-        ordemDoCaminho.add(new Position(3, 2));
-        ordemDoCaminho.add(new Position(3, 3));
-        ordemDoCaminho.add(new Position(4, 3));
-        ordemDoCaminho.add(new Position(5, 3));
-        ordemDoCaminho.add(new Position(6, 3));
-        ordemDoCaminho.add(new Position(6, 2));
-        ordemDoCaminho.add(new Position(6, 1));
-        ordemDoCaminho.add(new Position(7, 1));
-        ordemDoCaminho.add(new Position(8, 1));
-        ordemDoCaminho.add(new Position(8, 2));
-        ordemDoCaminho.add(new Position(8, 3));
-        ordemDoCaminho.add(new Position(8, 4));
-        ordemDoCaminho.add(new Position(8, 5));
-
-        for (Position pos : ordemDoCaminho) {
-            TileMap peca = this.grid[pos.getY()][pos.getX()];
-            this.caminho.adicionarPonto(peca.getCentro());
+        
+        for (Position pos : posicoesDoCaminho) {
+            this.caminho.adicionarPonto(grid[pos.getY()][pos.getX()].getCentro());
         }
-        //base sempre fica no final do caminho
-        this.posicaoDaBase = ordemDoCaminho.get(ordemDoCaminho.size() - 1);
+
+        this.posicaoDaBase = posicoesDoCaminho.get(posicoesDoCaminho.size() - 1);
     }
 
-    public Caminho getCaminho() {
-        return caminho;
+    private List<Position> gerarPosicoesDoCaminho() {
+        List<Position> ordemDoCaminho = new ArrayList<>();
+        conectarPontos(ordemDoCaminho, 1, 1, 1, 8);
+        conectarPontos(ordemDoCaminho, 1, 8, 7, 8);
+        conectarPontos(ordemDoCaminho, 7, 8, 7, 1);
+        conectarPontos(ordemDoCaminho, 7, 1, 3, 1);
+        conectarPontos(ordemDoCaminho, 3, 1, 3, 6);
+        conectarPontos(ordemDoCaminho, 3, 6, 11, 6);
+        conectarPontos(ordemDoCaminho, 11, 6, 11, 2);
+        conectarPontos(ordemDoCaminho, 11, 2, 18, 2);
+        conectarPontos(ordemDoCaminho, 18, 2, 18, 8);
+        conectarPontos(ordemDoCaminho, 18, 8, 13, 8);
+        conectarPontos(ordemDoCaminho, 13, 8, 13, 4);
+        return ordemDoCaminho;
+    }
+    
+    private void conectarPontos(List<Position> lista, int startX, int startY, int endX, int endY) {
+        int x = startX;
+        int y = startY;
+        while (x != endX || y != endY) {
+            lista.add(new Position(x, y));
+            if (x < endX) x++; else if (x > endX) x--;
+            else if (y < endY) y++; else if (y > endY) y--;
+        }
+        lista.add(new Position(endX, endY));
     }
 
-    public void desenharMapaEnemy(List<Enemy> inimigos) {
+    public Caminho getCaminho() { return caminho; }
+    public int getLargura() { return largura; }
+    public int getAltura() { return altura; }
+    public TileMap getTileAt(int x, int y) {
+        if (x >= 0 && x < largura && y >= 0 && y < altura) {
+            return grid[y][x];
+        }
+        return null;
+    }
+
+    public void desenharMapa(List<Enemy> inimigos, List<Projectile> projectiles, List<Tower> towers, int cursorX, int cursorY) {
         char[][] displayGrid = new char[altura][largura];
 
         for (int y = 0; y < altura; y++) {
             for (int x = 0; x < largura; x++) {
-                if (!grid[y][x].podeConstruir()) {
-                    displayGrid[y][x] = '#'; //caminho
-                } else {
-                    displayGrid[y][x] = '.'; //área construível
-                }
+                displayGrid[y][x] = grid[y][x].podeConstruir() ? ' ' : '.';
             }
         }
+        displayGrid[posicaoDaBase.getY()][posicaoDaBase.getX()] = 'B';
 
-        displayGrid[posicaoDaBase.getY()][posicaoDaBase.getX()] = 'B'; //base
-
+        for (Tower tower : towers) {
+            Ponto pos = tower.getPosition();
+            displayGrid[(int)(pos.getY() - 0.5)][(int)(pos.getX() - 0.5)] = 'T';
+        }
         for (Enemy inimigo : inimigos) {
             if (!inimigo.chegouNaBase()) {
                 Ponto pos = inimigo.getPosition();
-                int gridX = (int) Math.round(pos.getX() - 0.5);
-                int gridY = (int) Math.round(pos.getY() - 0.5);
-
-                if (gridX >= 0 && gridX < largura && gridY >= 0 && gridY < altura) {
-                    char droneChar = inimigo.getCharRepresentation();
-                    displayGrid[gridY][gridX] = droneChar;
+                displayGrid[(int) pos.getY()][(int) pos.getX()] = inimigo.getCharRepresentation();
+            }
+        }
+        for (Projectile p : projectiles) {
+            Ponto pos = p.getPosition();
+            int gridX = (int) pos.getX();
+            int gridY = (int) pos.getY();
+            if (gridX >= 0 && gridX < largura && gridY >= 0 && gridY < altura) {
+                if (displayGrid[gridY][gridX] == '.' || displayGrid[gridY][gridX] == '#') {
+                    displayGrid[gridY][gridX] = p.getCharRepresentation();
                 }
             }
         }
+        if (cursorX >= 0 && cursorY >= 0) {
+            displayGrid[cursorY][cursorX] = 'X';
+        }
 
         StringBuilder builder = new StringBuilder("DroneFront:\n");
-        for (int y = 0; y < altura; y++) {
-            for (int x = 0; x < largura; x++) {
-                builder.append(displayGrid[y][x]).append(" ");
+        for (char[] row : displayGrid) {
+            for (char cell : row) {
+                builder.append(cell).append(" ");
             }
             builder.append("\n");
         }
         System.out.println(builder.toString());
-    }
-     public static void main(String[] args) {
-
-        GridMap mapa = new GridMap();
-        Caminho caminhoGerado = mapa.getCaminho();
-
-        System.out.println(mapa);
-        System.out.println(caminhoGerado);
     }
 }

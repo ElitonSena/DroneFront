@@ -13,6 +13,8 @@ public abstract class Enemy {
     protected Ponto position;
     protected int proxCaminho;
     private boolean chegouNaBase = false;
+    private double speedModifier = 1.0;
+    private double slowTimer = 0;
 
     public Enemy(int hp, double speed, int moeda, int dano, Ponto startPosition) {
         this.hp = hp;
@@ -38,6 +40,13 @@ public abstract class Enemy {
     public boolean update(double deltaTime, Caminho caminho) {
         if (chegouNaBase) return true;
 
+        if (slowTimer > 0) {
+            slowTimer -= deltaTime;
+            if (slowTimer <= 0) {
+                this.speedModifier = 1.0; // atualiza p velocidade normal
+            }
+        }
+
         List<Ponto> pontosDoCaminho = caminho.getPontosDoCaminho();
         if (proxCaminho >= pontosDoCaminho.size()) {
             this.chegouNaBase = true;
@@ -46,7 +55,7 @@ public abstract class Enemy {
 
         Ponto alvo = pontosDoCaminho.get(proxCaminho);
         double distanciaParaAlvo = Math.sqrt(Math.pow(alvo.getX() - position.getX(), 2) + Math.pow(alvo.getY() - position.getY(), 2));
-        double movimento = speed * deltaTime;
+        double movimento = (speed * speedModifier) * deltaTime;
 
         if (distanciaParaAlvo <= movimento) {
             this.position = alvo;
@@ -71,5 +80,33 @@ public abstract class Enemy {
         String status = chegouNaBase ? "chegou na base" : String.format("pos: (%.2f, %.2f)", position.getX(), position.getY());
         return String.format("%s | HP: %d | %s",
                 this.getClass().getSimpleName(), hp, status);
+    }
+
+    public int getHp() {
+        return this.hp;
+    }
+
+    public int getProxCaminho() {
+        return this.proxCaminho;
+    }
+    
+    public void takeDamage(int amount) {
+        this.hp -= amount;
+        if (this.hp < 0) {
+            this.hp = 0;
+        }
+    }
+
+    public void applySlow(double modifier, double duration) {
+        this.speedModifier = modifier;
+        this.slowTimer = duration;
+    }
+
+    public boolean isDead() {
+        return this.hp <= 0;
+    }
+
+    public int getMoeda() {
+        return this.moeda;
     }
 }

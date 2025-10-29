@@ -24,6 +24,14 @@ public class WaveManager {
         }
     }
 
+    public boolean isWaveFinished() {
+        if (waveAtualIndex >= todasAsWaves.size()) {
+            return true;
+        }
+        Wave waveAtual = todasAsWaves.get(waveAtualIndex);
+        return waveAtual.estaConcluida();
+    }
+
     private final List<SpawnState> estadosSpawnAtuais = new ArrayList<>();
 
     public WaveManager(Ponto pontoInicial) {
@@ -46,6 +54,7 @@ public class WaveManager {
         wave3.adicionarEvento(new Wave.SpawnEvent("BOMBER", 3, 3.0));
         wave3.adicionarEvento(new Wave.SpawnEvent("SCOUT", 8, 1.0));
         this.todasAsWaves.add(wave3);
+        //to do: implementar uma função pra descrever a qtd de drones com base no índice da onda
     }
 
     public void update(double deltaTime) {

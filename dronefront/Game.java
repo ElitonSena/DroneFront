@@ -6,49 +6,162 @@ import dronefront.game.WaveManager;
 import dronefront.map.Caminho;
 import dronefront.map.GridMap;
 import dronefront.map.Ponto;
+import dronefront.map.Position;
+import dronefront.map.TileMap;
+import dronefront.projectile.Projectile;
+import dronefront.tower.GunTower;
+import dronefront.tower.PEMTower;
+import dronefront.tower.Tower;
+
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Optional;
+import java.util.Scanner;
 
 public class Game {
 
-    public static void main(String[] args) throws InterruptedException {
-        GridMap mapa = new GridMap();
-        Caminho caminho = mapa.getCaminho();
+    private enum GameState { BUILD_PHASE, WAVE_IN_PROGRESS }
+    private boolean gameWon = false;
+
+    private final GridMap mapa;
+    private final Caminho caminho;
+    private final WaveManager waveManager;
+    private final List<Tower> towers = new ArrayList<>();
+    private final List<Projectile> projectiles = new ArrayList<>();
+    private int vidaBase = 20;
+    private int moedas = 250;
+    private GameState currentState = GameState.BUILD_PHASE;
+    private String buildMessage = "Bem-vindo! Construa suas defesas.";
+    private Position cursor = new Position(0, 0);
+
+    public Game() {
+        mapa = new GridMap();
+        caminho = mapa.getCaminho();
         Ponto pontoInicial = caminho.getPontosDoCaminho().get(0);
+        waveManager = new WaveManager(pontoInicial);
+    }
 
-        // parâmetros iniciais
-        int vidaBase = 20;
-        int moedas = 100;
+    public void run() throws InterruptedException {
+    Scanner scanner = new Scanner(System.in);
 
-        WaveManager waveManager = new WaveManager(pontoInicial);
+    while (vidaBase > 0 && !gameWon) {
+        drawCurrentState();
 
-        // loop
-        final int TICK_MS = 100;
-        final double TICK_S = TICK_MS / 1000.0;
-        
-        while (vidaBase > 0 && !waveManager.isFinished()) {
-            waveManager.update(TICK_S);
-
-            List<Enemy> inimigosAtivos = waveManager.getInimigosAtivos();
-            
-            for (Enemy inimigo : inimigosAtivos) {
-                boolean chegou = inimigo.update(TICK_S, caminho);
-                if (chegou) {
-                    vidaBase -= inimigo.getDano();
-                }
-            }
-
-            ConsoleUI.draw(mapa, inimigosAtivos, vidaBase, moedas, waveManager.getWaveAtual());
-
-            Thread.sleep(TICK_MS);
-        }
-
-        ConsoleUI.draw(mapa, new ArrayList<>(), vidaBase, moedas, waveManager.getWaveAtual());
-
-        if (vidaBase <= 0) {
-            System.out.println("\nvc morreu :(");
+        if (currentState == GameState.WAVE_IN_PROGRESS) {
+            handleWaveInProgress();
         } else {
-            System.out.println("\nvc ganhou :)");
+            handleBuildPhase(scanner);
         }
+    }
+    scanner.close();
+    System.out.println(vidaBase <= 0 ? "\nVoce foi derrotado! :(" : "\nVoce venceu! :)");
+}
+
+    private void drawCurrentState() {
+        int cursorX = (currentState == GameState.BUILD_PHASE) ? cursor.getX() : -1;
+        int cursorY = (currentState == GameState.BUILD_PHASE) ? cursor.getY() : -1;
+        ConsoleUI.draw(mapa, waveManager.getInimigosAtivos(), projectiles, towers, vidaBase, moedas, waveManager.getWaveAtual(), cursorX, cursorY);
+}
+
+    private void handleWaveInProgress() throws InterruptedException {
+        final double TICK_S = 0.1;
+        waveManager.update(TICK_S);
+        List<Enemy> inimigosAtivos = waveManager.getInimigosAtivos();
+
+        towers.forEach(tower -> {
+            tower.update(TICK_S, inimigosAtivos);
+            projectiles.addAll(tower.collectNewProjectiles());
+        });
+
+        projectiles.forEach(p -> p.update(TICK_S));
+        projectiles.removeIf(Projectile::hasHitTarget);
+
+        Iterator<Enemy> enemyIterator = inimigosAtivos.iterator();
+        while (enemyIterator.hasNext()) {
+            Enemy inimigo = enemyIterator.next();
+            if (inimigo.update(TICK_S, caminho)) {
+                vidaBase -= inimigo.getDano();
+            }
+            if (inimigo.isDead()) {
+                moedas += inimigo.getMoeda();
+                enemyIterator.remove();
+            }
+        }
+
+            if (waveManager.isWaveFinished() && waveManager.getInimigosAtivos().isEmpty()) {
+            if (waveManager.isFinished()) {
+                gameWon = true;
+            } else {
+                currentState = GameState.BUILD_PHASE;
+            }
+        }
+        Thread.sleep((long)(TICK_S * 1000));
+    }
+    private void handleBuildPhase(Scanner scanner) {
+        ConsoleUI.displayBuildMessage(buildMessage);
+        buildMessage = "";
+        String input = scanner.next().toLowerCase();
+        if (input.isEmpty()) return;
+
+        char command = input.charAt(0);
+        switch (command) {
+            case 'w': if (cursor.getY() > 0) cursor = new Position(cursor.getX(), cursor.getY() - 1); break;
+            case 's': if (cursor.getY() < mapa.getAltura() - 1) cursor = new Position(cursor.getX(), cursor.getY() + 1); break;
+            case 'a': if (cursor.getX() > 0) cursor = new Position(cursor.getX() - 1, cursor.getY()); break;
+            case 'd': if (cursor.getX() < mapa.getLargura() - 1) cursor = new Position(cursor.getX() + 1, cursor.getY()); break;
+            case '1': tryBuildTower('1'); break;
+            case '2': tryBuildTower('2'); break;
+            case 'v': trySellTower(); break;
+            case 'n': currentState = GameState.WAVE_IN_PROGRESS; break;
+        }
+    }
+
+    private void tryBuildTower(char towerType) {
+        int x = cursor.getX();
+        int y = cursor.getY();
+        TileMap tile = mapa.getTileAt(x, y);
+
+        if (tile == null || !tile.podeConstruir()) {
+            buildMessage = "Nao pode construir ai (caminho ou fora do mapa).";
+            return;
+        }
+        if (towers.stream().anyMatch(t -> (int)(t.getPosition().getX() - 0.5) == x && (int)(t.getPosition().getY() - 0.5) == y)) {
+            buildMessage = "Ja existe uma torre neste local.";
+            return;
+        }
+
+        Tower newTower = (towerType == '1')
+            ? new GunTower(new Ponto(x + 0.5, y + 0.5))
+            : new PEMTower(new Ponto(x + 0.5, y + 0.5));
+
+        if (moedas < newTower.getCost()) {
+            buildMessage = "Moedas insuficientes! Custo: " + newTower.getCost();
+        } else {
+            moedas -= newTower.getCost();
+            towers.add(newTower);
+            buildMessage = (towerType == '1' ? "GunTower" : "PEMTower") + " construida em (" + x + "," + y + ").";
+        }
+    }
+
+    private void trySellTower() {
+        int x = cursor.getX();
+        int y = cursor.getY();
+        Optional<Tower> towerToSell = towers.stream()
+            .filter(t -> (int)(t.getPosition().getX() - 0.5) == x && (int)(t.getPosition().getY() - 0.5) == y)
+            .findFirst();
+
+        if (towerToSell.isPresent()) {
+            Tower foundTower = towerToSell.get();
+            int refund = foundTower.getCost() / 2;
+            moedas += refund;
+            towers.remove(foundTower);
+            buildMessage = "Torre vendida em (" + x + "," + y + ") por +" + refund + " moedas.";
+        } else {
+            buildMessage = "Nenhuma torre para vender em (" + x + "," + y + ").";
+        }
+    }
+    public static void main(String[] args) throws InterruptedException {
+        new Game().run();
     }
 }
