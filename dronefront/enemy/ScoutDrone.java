@@ -16,4 +16,10 @@ public class ScoutDrone extends Enemy {
     public char getCharRepresentation() {
         return 'S';
     }
+    
+    @Override
+    public void applySlow(double modifier, double duration) {
+        this.speedModifier = modifier;
+        this.slowTimer = duration;
+    }
 }

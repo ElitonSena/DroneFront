@@ -91,7 +91,12 @@ public class GridMap {
 
         for (Tower tower : towers) {
             Ponto pos = tower.getPosition();
-            displayGrid[(int)(pos.getY() - 0.5)][(int)(pos.getX() - 0.5)] = 'T';
+            int gridY = (int)(pos.getY() - 0.5);
+            int gridX = (int)(pos.getX() - 0.5);
+            
+            if (gridX >= 0 && gridX < largura && gridY >= 0 && gridY < altura) {
+                displayGrid[gridY][gridX] = (char) ('0' + Math.min(tower.getLevel(), 9));
+            }
         }
         for (Enemy inimigo : inimigos) {
             if (!inimigo.chegouNaBase()) {

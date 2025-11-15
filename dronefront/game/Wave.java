@@ -1,39 +1,52 @@
 package dronefront.game;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class Wave {
 
-    public static class SpawnEvent {
-        public final String tipoInimigo;
-        public final int quantidade;
-        public final double intervalo;
+    private final int totalInimigos;
+    private final double intervaloSpawn;
+    private final double probScout;
+    private final double probBomber;
+    private final double probTank;
 
-        public SpawnEvent(String tipoInimigo, int quantidade, double intervalo) {
-            this.tipoInimigo = tipoInimigo;
-            this.quantidade = quantidade;
-            this.intervalo = intervalo;
-        }
-    }
-
-    private final List<SpawnEvent> eventos;
     private boolean iniciada = false;
     private boolean concluida = false;
 
-    public Wave() {
-        this.eventos = new ArrayList<>();
+    public Wave(int totalInimigos, double intervaloSpawn, double probScout, double probBomber, double probTank) {
+        this.totalInimigos = totalInimigos;
+        this.intervaloSpawn = intervaloSpawn;
+
+        double probTotal = probScout + probBomber + probTank;
+        if (probTotal <= 0) {
+            this.probScout = 1.0;
+            this.probBomber = 0.0;
+            this.probTank = 0.0;
+        } else {
+            this.probScout = probScout / probTotal;
+            this.probBomber = probBomber / probTotal;
+            this.probTank = probTank / probTotal;
+        }
     }
 
-    public void adicionarEvento(SpawnEvent evento) {
-        this.eventos.add(evento);
+    public int getTotalInimigos() {
+        return totalInimigos;
     }
 
-    public List<SpawnEvent> getEventos() {
-        return eventos;
+    public double getIntervaloSpawn() {
+        return intervaloSpawn;
     }
-    
-    //estados da onda
+
+    public double getProbScout() {
+        return probScout;
+    }
+
+    public double getProbBomber() {
+        return probBomber;
+    }
+
+    public double getProbTank() {
+        return probTank;
+    }
+
     public boolean foiIniciada() { return iniciada; }
     public void iniciar() { this.iniciada = true; }
     public boolean estaConcluida() { return concluida; }

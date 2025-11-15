@@ -11,9 +11,11 @@ import java.util.Optional;
 public abstract class Tower {
 
     protected final Ponto position;
-    protected final double range;
-    protected final double cooldown;
+    protected double range;
+    protected double cooldown;
     protected final int cost;
+    protected int level = 1;
+    protected int maxLevel = 3;
 
     private double cooldownTimer = 0;
 
@@ -34,6 +36,10 @@ public abstract class Tower {
         return this.cost;
     }
 
+    public int getLevel() {
+        return this.level;
+    }
+
     public void update(double deltaTime, List<Enemy> enemies) {
         if (cooldownTimer > 0) {
             cooldownTimer -= deltaTime;
@@ -46,7 +52,6 @@ public abstract class Tower {
             });
         }
     }
-
 
     protected void addProjectile(Projectile projectile) {
         this.newProjectiles.add(projectile);
@@ -62,6 +67,14 @@ public abstract class Tower {
         return Math.sqrt(Math.pow(position.getX() - enemy.getPosition().getX(), 2) +
                          Math.pow(position.getY() - enemy.getPosition().getY(), 2));
     }
+
+    public boolean isMaxLevel() {
+        return this.level >= this.maxLevel;
+    }
+
+    public abstract int getUpgradeCost();
+
+    public abstract void upgrade();
 
     protected abstract Optional<Enemy> findTarget(List<Enemy> enemies);
 

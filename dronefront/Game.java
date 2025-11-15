@@ -9,6 +9,7 @@ import dronefront.map.Ponto;
 import dronefront.map.Position;
 import dronefront.map.TileMap;
 import dronefront.projectile.Projectile;
+import dronefront.tower.FireTower;
 import dronefront.tower.GunTower;
 import dronefront.tower.PEMTower;
 import dronefront.tower.Tower;
@@ -112,6 +113,8 @@ public class Game {
             case 'd': if (cursor.getX() < mapa.getLargura() - 1) cursor = new Position(cursor.getX() + 1, cursor.getY()); break;
             case '1': tryBuildTower('1'); break;
             case '2': tryBuildTower('2'); break;
+            case '3': tryBuildTower('3'); break; 
+            case 'u': tryUpgradeTower(); break;
             case 'v': trySellTower(); break;
             case 'n': currentState = GameState.WAVE_IN_PROGRESS; break;
         }
@@ -131,16 +134,30 @@ public class Game {
             return;
         }
 
-        Tower newTower = (towerType == '1')
-            ? new GunTower(new Ponto(x + 0.5, y + 0.5))
-            : new PEMTower(new Ponto(x + 0.5, y + 0.5));
+        Tower newTower;
+
+        if (towerType == '1') {
+            newTower = new GunTower(new Ponto(x + 0.5, y + 0.5));
+        } else if (towerType == '2') {
+            newTower = new PEMTower(new Ponto(x + 0.5, y + 0.5));
+        } else if (towerType == '3') {
+            newTower = new FireTower(new Ponto(x + 0.5, y + 0.5));
+        } else {
+            return;
+        }
 
         if (moedas < newTower.getCost()) {
             buildMessage = "Moedas insuficientes! Custo: " + newTower.getCost();
         } else {
             moedas -= newTower.getCost();
             towers.add(newTower);
-            buildMessage = (towerType == '1' ? "GunTower" : "PEMTower") + " construida em (" + x + "," + y + ").";
+            
+            String towerName = "Torre";
+            if (towerType == '1') towerName = "GunTower";
+            else if (towerType == '2') towerName = "PEMTower";
+            else if (towerType == '3') towerName = "FireTower";
+            
+            buildMessage = towerName + " construida em (" + x + "," + y + ").";
         }
     }
 
@@ -161,6 +178,35 @@ public class Game {
             buildMessage = "Nenhuma torre para vender em (" + x + "," + y + ").";
         }
     }
+
+    private void tryUpgradeTower() {
+        int x = cursor.getX();
+        int y = cursor.getY();
+        Optional<Tower> towerToUpgrade = towers.stream()
+            .filter(t -> (int)(t.getPosition().getX() - 0.5) == x && (int)(t.getPosition().getY() - 0.5) == y)
+            .findFirst();
+
+        if (!towerToUpgrade.isPresent()) {
+            buildMessage = "Nenhuma torre para aprimorar aqui.";
+            return;
+        }
+
+        Tower tower = towerToUpgrade.get();
+        if (tower.isMaxLevel()) {
+            buildMessage = "Torre ja esta no nivel maximo (Nivel " + tower.getLevel() + ").";
+            return;
+        }
+
+        int cost = tower.getUpgradeCost();
+        if (moedas < cost) {
+            buildMessage = "Moedas insuficientes! Custo do Aprimoramento: " + cost;
+        } else {
+            moedas -= cost;
+            tower.upgrade();
+            buildMessage = "Torre aprimorada para o Nivel " + tower.getLevel() + " por " + cost + " moedas.";
+        }
+    }
+
     public static void main(String[] args) throws InterruptedException {
         new Game().run();
     }

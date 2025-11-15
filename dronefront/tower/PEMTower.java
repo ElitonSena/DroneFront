@@ -12,7 +12,7 @@ import java.util.Optional;
 public class PEMTower extends Tower {
 
     private static final double SLOW_FACTOR = 0.5;
-    private static final double SLOW_DURATION = 3.0;
+    private double slowDuration = 3.0;
 
     public PEMTower(Ponto position) {
         super(position, 3.0, 2.0, 150);
@@ -30,6 +30,21 @@ public class PEMTower extends Tower {
     protected void fire(Enemy target) {
         // colocar projetil PEM aq
         System.out.println("PEMTower aplicando slow em " + target.getClass().getSimpleName());
-        target.applySlow(SLOW_FACTOR, SLOW_DURATION);
+        target.applySlow(SLOW_FACTOR, this.slowDuration);
+    }
+
+    @Override
+    public int getUpgradeCost() {
+        return (int)(this.cost * 0.75 * this.level);
+    }
+
+    @Override
+    public void upgrade() {
+        if (isMaxLevel()) return;
+
+        this.level++;
+        this.range += 0.5;
+        this.slowDuration += 1.0;
+        this.cooldown *= 0.85;
     }
 }

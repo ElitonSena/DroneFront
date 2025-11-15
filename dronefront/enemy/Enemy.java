@@ -12,9 +12,13 @@ public abstract class Enemy {
     protected int dano;
     protected Ponto position;
     protected int proxCaminho;
-    private boolean chegouNaBase = false;
-    private double speedModifier = 1.0;
-    private double slowTimer = 0;
+    protected boolean chegouNaBase = false;
+    protected double speedModifier = 1.0;
+    protected double slowTimer = 0;
+    protected double vulnerabilityFactor = 1.0;
+    protected double burnDamagePerSecond = 0;
+    protected double burnTimer = 0;
+    protected double accumulatedBurnDamage = 0;
 
     public Enemy(int hp, double speed, int moeda, int dano, Ponto startPosition) {
         this.hp = hp;
@@ -39,11 +43,35 @@ public abstract class Enemy {
 
     public boolean update(double deltaTime, Caminho caminho) {
         if (chegouNaBase) return true;
+        
+        if (burnTimer > 0) {
+            burnTimer -= deltaTime;
+            accumulatedBurnDamage += burnDamagePerSecond * deltaTime;
+            
+            int damageToApply = (int) accumulatedBurnDamage;
+            if (damageToApply > 0) {
+                takeDamage(damageToApply);
+                accumulatedBurnDamage -= damageToApply;
+            }
+
+            if (burnTimer <= 0) {
+                burnDamagePerSecond = 0;
+                accumulatedBurnDamage = 0;
+            }
+        }
 
         if (slowTimer > 0) {
             slowTimer -= deltaTime;
             if (slowTimer <= 0) {
-                this.speedModifier = 1.0; // atualiza p velocidade normal
+                this.speedModifier = 1.0; 
+                this.vulnerabilityFactor = 1.0;
+            }
+        }
+
+        if (slowTimer > 0) {
+            slowTimer -= deltaTime;
+            if (slowTimer <= 0) {
+                this.speedModifier = 1.0;
             }
         }
 
@@ -91,7 +119,9 @@ public abstract class Enemy {
     }
     
     public void takeDamage(int amount) {
-        this.hp -= amount;
+        int actualDamage = (int)(amount * this.vulnerabilityFactor);
+        
+        this.hp -= actualDamage;
         if (this.hp < 0) {
             this.hp = 0;
         }
@@ -100,8 +130,16 @@ public abstract class Enemy {
     public void applySlow(double modifier, double duration) {
         this.speedModifier = modifier;
         this.slowTimer = duration;
+        this.vulnerabilityFactor = 1.5;
     }
 
+    public void applyBurn(double dps, double duration) {
+        if (dps >= this.burnDamagePerSecond) {
+             this.burnDamagePerSecond = dps;
+             this.burnTimer = duration;
+        }
+    }
+    
     public boolean isDead() {
         return this.hp <= 0;
     }

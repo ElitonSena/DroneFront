@@ -3,9 +3,11 @@ package dronefront.game;
 import dronefront.enemy.BomberDrone;
 import dronefront.enemy.Enemy;
 import dronefront.enemy.ScoutDrone;
+import dronefront.enemy.TankDrone;
 import dronefront.map.Ponto;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 public class WaveManager {
 
@@ -13,16 +15,11 @@ public class WaveManager {
     private final Ponto pontoInicial;
     private int waveAtualIndex = 0;
     private final List<Enemy> inimigosAtivos = new ArrayList<>();
+    
+    private final Random random = new Random();
 
-    private static class SpawnState {
-        Wave.SpawnEvent evento;
-        int spawnados = 0;
-        double timer = 0;
-
-        SpawnState(Wave.SpawnEvent evento) {
-            this.evento = evento;
-        }
-    }
+    private int inimigosSpawnadosNaWave = 0;
+    private double spawnTimer = 0;
 
     public boolean isWaveFinished() {
         if (waveAtualIndex >= todasAsWaves.size()) {
@@ -32,29 +29,17 @@ public class WaveManager {
         return waveAtual.estaConcluida();
     }
 
-    private final List<SpawnState> estadosSpawnAtuais = new ArrayList<>();
-
     public WaveManager(Ponto pontoInicial) {
         this.pontoInicial = pontoInicial;
         definirWaves();
     }
 
     private void definirWaves() {
-        // w1
-        Wave wave1 = new Wave();
-        wave1.adicionarEvento(new Wave.SpawnEvent("SCOUT", 3, 2.0));
-        this.todasAsWaves.add(wave1);
-        // w2
-        Wave wave2 = new Wave();
-        wave2.adicionarEvento(new Wave.SpawnEvent("SCOUT", 5, 1.5));
-        wave2.adicionarEvento(new Wave.SpawnEvent("BOMBER", 1, 5.0));
-        this.todasAsWaves.add(wave2);
-        // w3
-        Wave wave3 = new Wave();
-        wave3.adicionarEvento(new Wave.SpawnEvent("BOMBER", 3, 3.0));
-        wave3.adicionarEvento(new Wave.SpawnEvent("SCOUT", 8, 1.0));
-        this.todasAsWaves.add(wave3);
-        //to do: implementar uma função pra descrever a qtd de drones com base no índice da onda
+        todasAsWaves.add(new Wave(10, 2.0, 1.0, 0.0, 0.0));
+        todasAsWaves.add(new Wave(15, 1.5, 0.7, 0.3, 0.0));
+        todasAsWaves.add(new Wave(25, 1.5, 0.5, 0.4, 0.1));
+        todasAsWaves.add(new Wave(35, 1.0, 0.4, 0.4, 0.2));
+        todasAsWaves.add(new Wave(50, 0.8, 0.2, 0.5, 0.3));
     }
 
     public void update(double deltaTime) {
@@ -66,44 +51,55 @@ public class WaveManager {
 
         if (waveAtual.estaConcluida() && inimigosAtivos.isEmpty()) {
             waveAtualIndex++;
-            if (waveAtualIndex < todasAsWaves.size()) {
-                iniciarProximaWave();
+            if (waveAtualIndex >= todasAsWaves.size()) {
+                return;
             }
-            return;
+            waveAtual = todasAsWaves.get(waveAtualIndex);
         }
 
         if (!waveAtual.foiIniciada()) {
             iniciarProximaWave();
         }
 
-        boolean todosEventosConcluidos = true;
-        for (SpawnState state : estadosSpawnAtuais) {
-            if (state.spawnados < state.evento.quantidade) {
-                todosEventosConcluidos = false;
-                state.timer += deltaTime;
-                if (state.timer >= state.evento.intervalo) {
-                    state.timer = 0;
-                    spawnInimigo(state.evento.tipoInimigo);
-                    state.spawnados++;
+        if (waveAtual.foiIniciada() && !waveAtual.estaConcluida()) {
+            spawnTimer += deltaTime;
+
+            if (spawnTimer >= waveAtual.getIntervaloSpawn()) {
+                spawnTimer = 0;
+
+                if (inimigosSpawnadosNaWave < waveAtual.getTotalInimigos()) {
+                    String tipoInimigo = escolherInimigoAleatorio(waveAtual);
+                    spawnInimigo(tipoInimigo);
+                    inimigosSpawnadosNaWave++;
                 }
             }
-        }
-        
-        if (todosEventosConcluidos) {
-            waveAtual.concluir();
+            
+            if (inimigosSpawnadosNaWave >= waveAtual.getTotalInimigos()) {
+                waveAtual.concluir();
+            }
         }
 
         inimigosAtivos.removeIf(Enemy::chegouNaBase);
     }
-    
+
+    private String escolherInimigoAleatorio(Wave wave) {
+        double roll = random.nextDouble();
+
+        if (roll < wave.getProbScout()) {
+            return "SCOUT";
+        } else if (roll < wave.getProbScout() + wave.getProbBomber()) {
+            return "BOMBER";
+        } else {
+            return "TANK";
+        }
+    }
+
     private void iniciarProximaWave() {
         if (waveAtualIndex < todasAsWaves.size()) {
             Wave novaWave = todasAsWaves.get(waveAtualIndex);
             novaWave.iniciar();
-            estadosSpawnAtuais.clear();
-            for (Wave.SpawnEvent evento : novaWave.getEventos()) {
-                estadosSpawnAtuais.add(new SpawnState(evento));
-            }
+            this.inimigosSpawnadosNaWave = 0;
+            this.spawnTimer = 0;
         }
     }
 
@@ -113,6 +109,8 @@ public class WaveManager {
             novoInimigo = new ScoutDrone(pontoInicial);
         } else if ("BOMBER".equalsIgnoreCase(tipo)) {
             novoInimigo = new BomberDrone(pontoInicial);
+        } else if ("TANK".equalsIgnoreCase(tipo)) {
+            novoInimigo = new TankDrone(pontoInicial);
         }
 
         if (novoInimigo != null) {
@@ -125,7 +123,7 @@ public class WaveManager {
     }
 
     public int getWaveAtual() {
-        return waveAtualIndex + 1;
+        return Math.min(waveAtualIndex + 1, todasAsWaves.size());
     }
 
     public boolean isFinished() {

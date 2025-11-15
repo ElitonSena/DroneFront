@@ -15,4 +15,12 @@ public class BomberDrone extends Enemy {
     public char getCharRepresentation() {
         return 'B';
     }
+
+    @Override
+    public void applyBurn(double dps, double duration) {
+        if (dps >= this.burnDamagePerSecond) {
+             this.burnDamagePerSecond = dps * 1.5;
+             this.burnTimer = duration * 1.5;
+        }
+    }
 }

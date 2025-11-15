@@ -20,8 +20,8 @@ public class ConsoleUI {
             System.out.println(">> " + message);
         }
         System.out.println("CONSTRUCAO: WASD para mover o X");
-        System.out.println(" [1] Construir GunTower (100) | [2] Construir PEMTower (150)");
-        System.out.println(" [V] Vender Torre (50% do valor)  | [N] Iniciar proxima onda");
+        System.out.println(" [1] GunTower (100) | [2] PEMTower (150) | [3] FireTower (125)");
+        System.out.println(" [V] Vender Torre (50%)  | [U] Aprimorar Torre | [N] Iniciar proxima onda");
         System.out.print("Comando: ");
     }
     

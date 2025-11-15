@@ -13,11 +13,16 @@ import java.util.Optional;
 
 public class GunTower extends Tower {
 
-    private final int damage;
+    private int damage;
 
     public GunTower(Ponto position) {
         super(position, 2.5, 0.25, 100);
         this.damage = 8;
+    }
+
+    @Override
+    public int getUpgradeCost() {
+        return (int)(this.cost * 0.75 * this.level);
     }
 
     @Override
@@ -33,5 +38,15 @@ public class GunTower extends Tower {
         // cria a bala e add na lista de projeteis
         Projectile bullet = new Bullet(this.position, target, this.damage);
         addProjectile(bullet);
+    }
+
+    @Override
+    public void upgrade() {
+        if (isMaxLevel()) return;
+        
+        this.level++;
+        this.range += 0.25;
+        this.damage += 4;
+        this.cooldown *= 0.9;
     }
 }
