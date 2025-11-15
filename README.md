@@ -21,7 +21,7 @@ Para compilar e rodar o projeto, você precisa ter o **Java Development Kit (JDK
     -   ` `: Área livre (construção).
     -   `B`: A sua base.
     -   `S` e `B`: Inimigos, são os `ScoutDrones` e `BomberDrones`.
-    -   `T`: São as torres, podem ser `GunTower` ou `PEMTower`.
+    -   `T`: São as torres, podem ser `GunTower` ou `PEMTower`.  
     IMPORTANTE: Aperte enter para enviar o input na fase de construção.
 -   **Objetivo**: Sobreviver a todas as ondas de ataque.
 -   **Fim de Jogo**:
