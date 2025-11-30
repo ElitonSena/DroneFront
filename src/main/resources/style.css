@@ -1,0 +1,80 @@
+.root {
+}
+
+.menu-subtitle {
+    -fx-effect: dropshadow(three-pass-box, black, 10, 0, 0, 0);
+}
+
+.pause-overlay {
+    -fx-background-color: rgba(0, 0, 0, 0.7);
+}
+
+.tutorial-box-left {
+    -fx-background-color: linear-gradient(from 0% 0% to 100% 0%, rgba(10, 15, 10, 0.95) 0%, rgba(10, 15, 10, 0.8) 60%, transparent 100%);
+    -fx-background-radius: 0 20 0 0;
+    -fx-padding: 30 80 50 50;
+}
+
+.tutorial-box-right {
+    -fx-background-color: linear-gradient(from 100% 0% to 0% 0%, rgba(10, 15, 10, 0.95) 0%, rgba(10, 15, 10, 0.8) 60%, transparent 100%);
+    -fx-background-radius: 20 0 0 0;
+    -fx-padding: 30 50 50 80;
+}
+
+.cards-container {
+    -fx-background-color: transparent;
+}
+
+.section-header {
+    -fx-border-color: gold;
+    -fx-border-width: 0 0 1 0;
+}
+
+.unit-card {
+    -fx-background-color: rgba(20, 30, 25, 0.9);
+    -fx-border-width: 0 0 0 4;
+}
+
+.scroll-pane {
+    -fx-background: transparent;
+    -fx-background-color: transparent;
+}
+
+.scroll-pane .viewport {
+    -fx-background-color: transparent;
+}
+
+.scroll-bar:vertical .track {
+   -fx-background-color: transparent;
+}
+
+.scroll-bar:vertical .thumb {
+    -fx-background-color: transparent;
+}
+
+.about-box {
+    -fx-background-color: linear-gradient(from 0% 0% to 100% 0%, rgba(10, 15, 10, 0.95) 0%, rgba(10, 15, 10, 0.8) 60%, transparent 100%);
+    -fx-background-radius: 0 20 0 0;
+    -fx-padding: 30 100 50 50;
+}
+
+.dev-name {
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.5), 5, 0, 0, 0);
+}
+
+.settings-box {
+    -fx-background-color: linear-gradient(to right, rgba(10, 15, 10, 0.95) 50%, transparent);
+    -fx-background-radius: 0 20 0 0;
+    -fx-padding: 30 150 50 50;
+}
+
+.game-over-box {
+    -fx-background-color: rgba(0, 0, 0, 0.85);
+}
+
+.menu-button {
+    -fx-effect: dropshadow(three-pass-box, black, 5, 0, 0, 0);
+    -fx-background-color: transparent;
+    -fx-border-width: 0 0 0 3px;
+    -fx-padding: 5 20 5 20;
+}
