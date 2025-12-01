@@ -8,7 +8,7 @@ import dronefront.wave.Wave;
 public class GameConfig {
 
     // CONFIGURAÇÕES DE MAPA E TILE
-    public static final int TILE_SIZE = 60;
+    public static final int TILE_SIZE = 45;
     public static final int MAP_COLS = 28; 
     public static final int MAP_ROWS = 14;
     

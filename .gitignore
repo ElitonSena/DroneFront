@@ -5,3 +5,4 @@ target/
 *.log
 *.jar
 *.war
+*.exe

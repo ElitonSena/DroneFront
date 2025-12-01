@@ -238,9 +238,9 @@ public class GameRenderer {
                 else towerSprite = imgFire3;
             }
 
-            double spritePivotX = 19.5; 
-            double spritePivotY = 29.0; 
-            drawRotatedImage(towerSprite, t.getRotation(), tileCenterX+5, tileCenterY+6, tileSize, tileSize, spritePivotX, spritePivotY);
+            double spritePivotX = 15; 
+            double spritePivotY = 22; 
+            drawRotatedImage(towerSprite, t.getRotation(), tileCenterX+6, tileCenterY+6, tileSize, tileSize, spritePivotX, spritePivotY);
         }
     }
 
